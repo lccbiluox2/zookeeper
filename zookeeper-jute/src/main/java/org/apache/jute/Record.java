@@ -24,12 +24,18 @@ import java.io.IOException;
 
 /**
  * Interface that is implemented by generated classes.
+ *
+ * 如果在zookeeper中，某些类需要进行序列化以及反序列化，都需要实现这个接口
  * 
  */
 @InterfaceAudience.Public
 public interface Record {
+
+    // 真正的序列化接口（把java对象，写入到网络流中，持久化到磁盘中）
     public void serialize(OutputArchive archive, String tag)
         throws IOException;
+
+    // 真正的反序列化方法（从网络流中读取对象）
     public void deserialize(InputArchive archive, String tag)
         throws IOException;
 }
