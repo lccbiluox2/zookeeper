@@ -131,10 +131,18 @@ public class ZooKeeper {
      * API.
      */
     private static class ZKWatchManager implements ClientWatchManager {
+
+        //如果某一个znode发生了对应的事件!根据zk返回的WatchedEvent 获取path ( znode路径)
+        //通过这个key( path )到这三个map里去寻找对应的watcher materialize() )
+        //通过另外一个方法来调用刚才返回的这些watcher 的process 方法
+
+        // 数据变化事件 需要回调的 监听器 列表
         private final Map<String, Set<Watcher>> dataWatches =
             new HashMap<String, Set<Watcher>>();
+        // znode创建和删除事件 需要回调的 监听器 列表
         private final Map<String, Set<Watcher>> existWatches =
             new HashMap<String, Set<Watcher>>();
+        // znode子节点的创建和删除事件 需要回调的 监听器 列表
         private final Map<String, Set<Watcher>> childWatches =
             new HashMap<String, Set<Watcher>>();
 
@@ -149,17 +157,28 @@ public class ZooKeeper {
         /* (non-Javadoc)
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, 
          *                                                        Event.EventType, java.lang.String)
+         *
+         * 说明:该方法在事件发生后，返回需要被通知的watcher集合。在该方法中，首先会根据EventType类型确定相应的事件类型，
+         * 然后根据事件类型的不同做出相应的操作，如针对None 类型，即无任何事件，则首先会从三个键值对中删除cLientPath对应的
+         *
+         * 然后将剩余的watcher集合添加至结果集合;针对NodeDataChanged和NodeCreated事件而言，
+         * 其会从datalvatches和lexistwatches中删除cL ientPath对应的Watcher,然后将剩余的watcher集合添加至结果集合。
          */
         @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state,
                                         Watcher.Event.EventType type,
                                         String clientPath)
         {
+            // 新生成的结果 Watcher 集合
             Set<Watcher> result = new HashSet<Watcher>();
 
+            // 确定事件的类型
             switch (type) {
             case None:
+                // 添加默认的watcher
                 result.add(defaultWatcher);
+
+                //是否需要清空(提取对zookeeper . disableAutoWatchReset字段进行配置的值、Zookeeper的状态是否为同步
                 boolean clear = ClientCnxn.getDisableAutoResetWatch() &&
                         state != Watcher.Event.KeeperState.SyncConnected;
 
@@ -191,22 +210,26 @@ public class ZooKeeper {
                 }
 
                 return result;
-            case NodeDataChanged:
-            case NodeCreated:
+            case NodeDataChanged:// 节点数据变化
+            case NodeCreated:// 创建节点
                 synchronized (dataWatches) {
+                    // 移除clientPath对应的watcher后全部添加到结果集合中
                     addTo(dataWatches.remove(clientPath), result);
                 }
                 synchronized (existWatches) {
+                    // 移除clientPath对应的watcher后全部添加到结果集合中
                     addTo(existWatches.remove(clientPath), result);
                 }
                 break;
-            case NodeChildrenChanged:
+            case NodeChildrenChanged:// 节点子节点变化
                 synchronized (childWatches) {
+                    // 移除clientPath对应的watcher后全部添加到结果集合中
                     addTo(childWatches.remove(clientPath), result);
                 }
                 break;
-            case NodeDeleted:
+            case NodeDeleted:// 删除节点
                 synchronized (dataWatches) {
+                    // 移除clientPath对应的watcher后全部添加到结果集合中
                     addTo(dataWatches.remove(clientPath), result);
                 }
                 // XXX This shouldn't be needed, but just in case

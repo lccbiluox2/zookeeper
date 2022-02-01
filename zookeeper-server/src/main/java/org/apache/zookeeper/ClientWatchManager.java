@@ -21,6 +21,7 @@ package org.apache.zookeeper;
 import java.util.Set;
 
 /**
+ * ClientWatchManager主要用来给客户端返回 一堆需要处理的watcher
  */
 public interface ClientWatchManager {
     /**
@@ -29,6 +30,13 @@ public interface ClientWatchManager {
      * internal structure as if the watches had triggered. The intent being 
      * that the callee is now responsible for notifying the watchers of the 
      * event, possibly at some later time.
+     *
+     * 根据zk返回回来的消息来决定到底回调那个watcher
+     * 该方法表示事件发生时，返回需要被通知的Watcher集合， 可能为空集合。
+     *
+     * 这个方法的三个参数组装成个对象。 其实就是 WatedEvent
+     * 这就是服务端给你传递回来的三个参数，在客户端就会调用构造方法，把这三个参数构造成watchedEvent
+     *
      * 
      * @param state event state
      * @param type event type

@@ -27,6 +27,12 @@ import org.apache.zookeeper.txn.TxnHeader;
 /**
  * Interface for reading transaction logs.
  *
+ * WAL的具体实现，负责读写操作日志， Committed Log
+ *
+ * TxnLog使用追加的方式，把每次事务都记录在Log中。
+ * 每次事务; Transaction: Header, Record
+ *         Header ： 事务头
+ *         Record ： 具体的事务信息
  */
 public interface TxnLog {
 

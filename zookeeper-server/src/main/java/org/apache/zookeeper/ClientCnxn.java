@@ -89,6 +89,7 @@ import org.slf4j.LoggerFactory;
  * of available servers to connect to and "transparently" switches servers it is
  * connected to as needed.
  *
+ * 存在客户端，来负责网络通讯的组件
  */
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class ClientCnxn {

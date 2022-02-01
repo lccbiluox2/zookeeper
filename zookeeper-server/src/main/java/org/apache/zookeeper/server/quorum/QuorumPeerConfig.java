@@ -144,11 +144,13 @@ public class QuorumPeerConfig {
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
             try {
+                // 加载数据
                 cfg.load(in);
             } finally {
                 in.close();
             }
 
+            // 主要解析方法
             parseProperties(cfg);
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
@@ -219,10 +221,13 @@ public class QuorumPeerConfig {
                        " or host:port:port:type");
                 }
                 LearnerType type = null;
+                // hostname
                 String hostname = parts[0];
+                // 端口
                 Integer port = Integer.parseInt(parts[1]);
                 Integer electionPort = null;
                 if (parts.length > 2){
+                    // 选举用的端口
                 	electionPort=Integer.parseInt(parts[2]);
                 }
                 if (parts.length > 3){
@@ -411,6 +416,7 @@ public class QuorumPeerConfig {
             BufferedReader br = new BufferedReader(new FileReader(myIdFile));
             String myIdString;
             try {
+                // todo: myId配置，注意这里没有去除两边的空格
                 myIdString = br.readLine();
             } finally {
                 br.close();

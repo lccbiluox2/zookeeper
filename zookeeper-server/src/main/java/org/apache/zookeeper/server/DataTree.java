@@ -1070,6 +1070,7 @@ public class DataTree {
         aclCache.deserialize(ia);
         nodes.clear();
         pTrie.clear();
+        // 获取节点
         String path = ia.readString("path");
         while (!path.equals("/")) {
             DataNode node = new DataNode();
@@ -1083,11 +1084,13 @@ public class DataTree {
                 root = node;
             } else {
                 String parentPath = path.substring(0, lastSlash);
+                // 设置父节点信息
                 node.parent = nodes.get(parentPath);
                 if (node.parent == null) {
                     throw new IOException("Invalid Datatree, unable to find " +
                             "parent " + parentPath + " of path " + path);
                 }
+                // 把当前节点 加入到 父节点的子节点列表
                 node.parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
                 if (eowner != 0) {

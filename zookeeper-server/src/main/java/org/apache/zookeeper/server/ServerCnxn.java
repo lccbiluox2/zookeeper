@@ -48,6 +48,13 @@ import org.apache.zookeeper.proto.RequestHeader;
 /**
  * Interface to a Server connection - represents a connection from a client
  * to the server.
+ *
+ * TODO MA Stats 统计数据
+ * TODO MA Watcher 事件处理器
+ * TODO MA ServerCnxn 表示服务器连接，表示个从客户端到服务器的连接。
+ * TODO MA NettyServerCnxn. 基FNetty的连接的具体实现。
+ * TODO MA NIOServerCnxn, 基FNIO的连接的具体实现。
+ *
  */
 public abstract class ServerCnxn implements Stats, Watcher {
     // This is just an arbitrary object to represent requests issued by

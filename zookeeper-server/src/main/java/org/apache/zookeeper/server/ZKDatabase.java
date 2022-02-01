@@ -214,8 +214,11 @@ public class ZKDatabase {
      * @throws IOException
      */
     public long loadDataBase() throws IOException {
+        // 从磁盘加载数据，从快照恢复数据
         long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
+        // 已经初始化好了
         initialized = true;
+        // 返回 zxid
         return zxid;
     }
 

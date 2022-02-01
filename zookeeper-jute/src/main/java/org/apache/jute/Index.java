@@ -31,8 +31,12 @@ package org.apache.jute;
  * }
  * </code>
  *
+ * 在进行反序列化的时候时候针对数据进行迭代操作的一个迭代器 Iterator (hasNext() hext() )
+ *
  */
 public interface Index {
+    // 迭代是否完毕
     public boolean done();
+    // 增加一条，获取下一条
     public void incr();
 }

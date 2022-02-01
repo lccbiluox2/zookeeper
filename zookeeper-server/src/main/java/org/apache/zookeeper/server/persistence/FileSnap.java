@@ -76,6 +76,10 @@ public class FileSnap implements SnapShot {
         if (snapList.size() == 0) {
             return -1L;
         }
+        /**
+         * 迭代遍历 storedFiles 的每个文件，将文件转成 inputArchive对象，并且通过该对象反序列化
+         * 到hdr （事务头）和 txn (事务体)
+         */
         File snap = null;
         boolean foundValid = false;
         for (int i = 0; i < snapList.size(); i++) {
@@ -87,6 +91,7 @@ public class FileSnap implements SnapShot {
                 snapIS = new BufferedInputStream(new FileInputStream(snap));
                 crcIn = new CheckedInputStream(snapIS, new Adler32());
                 InputArchive ia = BinaryInputArchive.getArchive(crcIn);
+                // todo: 核心 反序列化
                 deserialize(dt,sessions, ia);
                 long checkSum = crcIn.getChecksum().getValue();
                 long val = ia.readLong("val");

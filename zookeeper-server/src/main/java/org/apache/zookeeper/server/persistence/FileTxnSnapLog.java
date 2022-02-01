@@ -45,15 +45,32 @@ import org.slf4j.LoggerFactory;
  * above the implementations 
  * of txnlog and snapshot 
  * classes
+ *
+ * 这是一个组合类:既能操作日志，也能进行快照操作
+ *
+ * FileTxnSnapLog类，该 类的作用是用来管理ZooKeeper的数据存储等相关操作，可以看作
+ * 为ZooKeeper 服务层提供底层持久化的接口
+ *
+ * 在ZooKeeper 服务启动过程中，它会根据zoo.cfg配置文件中的dataDir数据快照目录
+ * 和dataLogDir事物日志目录来创建FileTxnSnapLog
+ *
+ * 关于zk的持久化最核心的个类:
+ * 2个成员变量:
+ *  1、TxnLog 专门维护 日志的读写
+ *  2、snapLog 专门维护 快照的管理
  */
 public class FileTxnSnapLog {
     //the direcotry containing the 
     //the transaction logs
+    // 日志文件目录
     private final File dataDir;
     //the directory containing the
     //the snapshot directory
+    // 快照文件目录
     private final File snapDir;
+    // 事务日志
     private TxnLog txnLog;
+    // 快照
     private SnapShot snapLog;
     public final static int VERSION = 2;
     public final static String version = "version-";
@@ -172,7 +189,11 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions, 
             PlayBackListener listener) throws IOException {
+        // 第一个操作：先把已经持久化到磁盘的 快照 数据反序列化到内存中
         snapLog.deserialize(dt, sessions);
+        // 第二步：从 ComiittedLogs 中去加载数据
+        //   在最后一次快照之后，也有一些新的事物被提交了，这些事物的日志记录在日志文件中，冷启动，也需要
+        //    加载这些日志中的，并且返回 max ZXID
         return fastForwardFromEdits(dt, sessions, listener);
     }
 
@@ -190,26 +211,41 @@ public class FileTxnSnapLog {
     public long fastForwardFromEdits(DataTree dt, Map<Long, Integer> sessions,
                                      PlayBackListener listener) throws IOException {
         FileTxnLog txnLog = new FileTxnLog(dataDir);
+
+        //加载comitted logs 的时候，从第一个有效的txn开始
+        //txn以前的数据,都被持久化到磁盘快照文件中了。已经在上一步加载过了
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
+        //上一步加载快照数据文件的时候，得到了快照数据中的最大的有效ZXID了。
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
         try {
+            // 从磁盘中加载 committed logs ，从第一个有效的 txn 开始
+            // 之前加载快照文件的时候， 会得到LastProcessedZxid, 所以从comitted Logs 加载的时候是:
+            // dt.las tProcessedZxid + 1
             while (true) {
                 // iterator points to 
                 // the first valid txn when initialized
+                // 迭代器在初始化的时候指向第一个有效的txn，获取下一个 事物头
                 hdr = itr.getHeader();
+                // 如果comitted logs中并没有有效log，则直接返回当前lastProcessedZxid
                 if (hdr == null) {
                     //empty logs 
                     return dt.lastProcessedZxid;
                 }
+                // 校验
                 if (hdr.getZxid() < highestZxid && highestZxid != 0) {
                     LOG.error("{}(higestZxid) > {}(next log) for type {}",
                             new Object[] { highestZxid, hdr.getZxid(),
                                     hdr.getType() });
                 } else {
+                    // highestZxid 更替
                     highestZxid = hdr.getZxid();
                 }
                 try {
+                    /**
+                     * 把 commited logs 中的数据，恢复到内存 （ZKDataBase 对象中的 DataTree)中
+                     * 底层就是不停的调用 createNode() 的操作加载committed logs中的数据到内存
+                     */
                     processTransaction(hdr,dt,sessions, itr.getTxn());
                 } catch(KeeperException.NoNodeException e) {
                    throw new IOException("Failed to process transaction type: " +
@@ -240,6 +276,7 @@ public class FileTxnSnapLog {
         ProcessTxnResult rc;
         switch (hdr.getType()) {
         case OpCode.createSession:
+            // 创建会话
             sessions.put(hdr.getClientId(),
                     ((CreateSessionTxn) txn).getTimeOut());
             if (LOG.isTraceEnabled()) {
@@ -253,6 +290,7 @@ public class FileTxnSnapLog {
             rc = dt.processTxn(hdr, txn);
             break;
         case OpCode.closeSession:
+            // 关闭会话
             sessions.remove(hdr.getClientId());
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
@@ -262,6 +300,7 @@ public class FileTxnSnapLog {
             rc = dt.processTxn(hdr, txn);
             break;
         default:
+            // 默认，处理一个事务操作，事实上就是一个 从 committed logs 中恢复数据到 DataTree 中
             rc = dt.processTxn(hdr, txn);
         }
 

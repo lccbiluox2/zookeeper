@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     public void start() {
         // ensure thread is started once and only once
         if (thread.getState() == Thread.State.NEW) {
+            // TODO MA去找ZooKeeperThread 的run 方法!
+            // 事实上，去找当前这个类的run() 方法。因为ZooKeeperThread 这个类的第个参数是this
             thread.start();
         }
     }
@@ -113,9 +116,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     @Override
     public void startup(ZooKeeperServer zks) throws IOException,
             InterruptedException {
+        // 启动zookeeperThread
         start();
         setZooKeeperServer(zks);
+
+        // 加载数据
         zks.startdata();
+        // 启动服务
         zks.startup();
     }
 
@@ -198,8 +205,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     }
 
     public void run() {
+        // 只要我们服务端的socket 没有关闭
         while (!ss.socket().isClosed()) {
             try {
+                // todo:等待用户连接 本身这个是阻塞方法，但是这里设置1秒，意味着每次阻塞1秒
                 selector.select(1000);
                 Set<SelectionKey> selected;
                 synchronized (this) {
@@ -209,11 +218,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
                         selected);
                 Collections.shuffle(selectedList);
                 for (SelectionKey k : selectedList) {
+                    // 如果是连接事件
                     if ((k.readyOps() & SelectionKey.OP_ACCEPT) != 0) {
                         SocketChannel sc = ((ServerSocketChannel) k
                                 .channel()).accept();
                         InetAddress ia = sc.socket().getInetAddress();
                         int cnxncount = getClientCnxnCount(ia);
+                        // 判断是不是那个机器连接的太对
                         if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
                             LOG.warn("Too many connections from " + ia
                                      + " - max is " + maxClientCnxns );
@@ -221,15 +232,20 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
                         } else {
                             LOG.info("Accepted socket connection from "
                                      + sc.socket().getRemoteSocketAddress());
+                            // 设置阻塞？不设置
                             sc.configureBlocking(false);
+                            // 注册SelectionKey
                             SelectionKey sk = sc.register(selector,
                                     SelectionKey.OP_READ);
+                            // 处理连接请求，每个客户端请求过来，都会相应的创建一个NIOServerCnxn
                             NIOServerCnxn cnxn = createConnection(sc, sk);
                             sk.attach(cnxn);
                             addCnxn(cnxn);
                         }
                     } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+                        // 如果是读写操作
                         NIOServerCnxn c = (NIOServerCnxn) k.attachment();
+                        // todo: 重点方法
                         c.doIO(k);
                     } else {
                         if (LOG.isDebugEnabled()) {

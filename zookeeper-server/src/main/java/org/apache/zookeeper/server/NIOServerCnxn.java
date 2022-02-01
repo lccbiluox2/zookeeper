@@ -54,6 +54,8 @@ import org.apache.zookeeper.server.util.OSMXBean;
 /**
  * This class handles communication with clients using NIO. There is one per
  * client, but only one thread doing the communication.
+ *
+ * zookeeper 默认使用的网络通讯的工厂组件
  */
 public class NIOServerCnxn extends ServerCnxn {
     static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxn.class);
@@ -242,7 +244,9 @@ public class NIOServerCnxn extends ServerCnxn {
 
                 return;
             }
+            // 是否可读
             if (k.isReadable()) {
+                // 读取数据
                 int rc = sock.read(incomingBuffer);
                 if (rc < 0) {
                     throw new EndOfStreamException(

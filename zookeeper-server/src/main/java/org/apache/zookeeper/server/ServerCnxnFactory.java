@@ -104,11 +104,20 @@ public abstract class ServerCnxnFactory {
     }
 
     public abstract void closeAll();
-    
+
+    /**
+     * cnxnFactory 负责zk的网络请求, createFactory, 中，从配置中读取 ZOOKEEPER_SERVER_CNXN_FACTORY,
+     * 默认是没有这个配置的，因此默认是使用NIOServerCnxnFactory,基于java的NIO实现
+     *
+     * @return
+     * @throws IOException
+     */
     static public ServerCnxnFactory createFactory() throws IOException {
+        // 从环境变量中获取 zookeeper.serverCnxnFactory= NIOServerCnxnFactory
         String serverCnxnFactoryName =
             System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
         if (serverCnxnFactoryName == null) {
+            // 默认值 NIOServerCnxnFactory
             serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
         }
         try {

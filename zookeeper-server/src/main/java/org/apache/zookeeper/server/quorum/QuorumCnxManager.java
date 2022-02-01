@@ -467,11 +467,15 @@ public class QuorumCnxManager {
         authServer.authenticate(sock, din);
 
         //If wins the challenge, then close the new connection.
+        // todo: sid 对方发送的选票的id 小于 mySid 那么，serverId小于的不允许选择
+        //     这里很霸道
         if (sid < this.mySid) {
             /*
              * This replica might still believe that the connection to sid is
              * up, so we have to shut down the workers before trying to open a
              * new connection.
+             *
+             * SendWorker 是用来发送选票的
              */
             SendWorker sw = senderWorkerMap.get(sid);
             if (sw != null) {
@@ -487,6 +491,13 @@ public class QuorumCnxManager {
 
             // Otherwise start worker threads to receive data.
         } else {
+            // 大于等于
+
+            /**
+             * 当有客户端连接进来后，会将该客户端Socket封装成RecvWorker 和Sendworker,
+             * 它们都是线程，分别负责和该Socket 所代表的客户端进行读写。
+             * 其中，RecvWorker 和SendWworker是成对出现的，每对负责维护和集群中的一台服 务器进行网络Io通信。
+             */
             SendWorker sw = new SendWorker(sock, sid);
             RecvWorker rw = new RecvWorker(sock, din, sid, sw);
             sw.setRecv(rw);
@@ -723,6 +734,7 @@ public class QuorumCnxManager {
             InetSocketAddress addr;
             while((!shutdown) && (numRetries < 3)){
                 try {
+                    // 创建socket
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
                     if (listenOnAllIPs) {
@@ -733,11 +745,16 @@ public class QuorumCnxManager {
                         addr = view.get(QuorumCnxManager.this.mySid)
                             .electionAddr;
                     }
+                    // 这个端口，默认是3888
                     LOG.info("My election bind port: " + addr.toString());
                     setName(view.get(QuorumCnxManager.this.mySid)
                             .electionAddr.toString());
+                    // todo: 绑定端口和地址
                     ss.bind(addr);
+
+                    // todo: 等待客户端，其他服务器的连接
                     while (!shutdown) {
+                        // 阻塞等待其他服务端进行连接
                         Socket client = ss.accept();
                         setSockOpts(client);
                         LOG.info("Received connection request "
@@ -751,6 +768,7 @@ public class QuorumCnxManager {
                         if (quorumSaslAuthEnabled) {
                             receiveConnectionAsync(client);
                         } else {
+                            // todo: 建立连接
                             receiveConnection(client);
                         }
 

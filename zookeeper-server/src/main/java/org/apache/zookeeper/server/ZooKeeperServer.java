@@ -409,10 +409,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
     
     public synchronized void startup() {
+        // 启动 Session 跟踪 和管理组件
         if (sessionTracker == null) {
             createSessionTracker();
         }
         startSessionTracker();
+        /**
+         * 初始化各种 RequestProcessor 主要是
+         *   PrepRequestProssor,SyncRequestProcessor,FinalRequestProcessor 3个请求处理器
+         */
         setupRequestProcessors();
 
         registerJMX();

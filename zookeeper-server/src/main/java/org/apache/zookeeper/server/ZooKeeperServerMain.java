@@ -96,12 +96,23 @@ public class ZooKeeperServerMain {
      */
     public void runFromConfig(ServerConfig config) throws IOException {
         LOG.info("Starting server");
+        // 初始化 FileTxnSnapLog 用来管理 FileTxLog 和 FileSnap
         FileTxnSnapLog txnLog = null;
         try {
+            /**
+             * 1. 创建ZkServer.对zookeeperServer设置一些参数，如 tickTime,minSessionTimeOut,maxSessionTimeout
+             * 2. 创建 CountDownLatch，注释里面写了，用来 watch zk的状态，当zk关闭或者出现内部错误的时候优雅的关闭服务
+             * 3. 根据配置参数 dataLogDir和 dataDir 创建 FileTxnSnapLog 用来存储zk数据和日志快照
+             * 4. 创建cnxnFactory zk的 socket 工厂，负责处理网络请求，zk里面有netty的Nio两种实现
+             * 5. cnxnFactory.startup(zkServer) 启动zk服务器
+             */
+
+
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
             // create a file logger url from the command line args
+            // zkServer 主要维护了一个 Processor Chain
             final ZooKeeperServer zkServer = new ZooKeeperServer();
             // Registers shutdown handler which will be used to know the
             // server error or shutdown state changes.
@@ -109,6 +120,7 @@ public class ZooKeeperServerMain {
             zkServer.registerServerShutdownHandler(
                     new ZooKeeperServerShutdownHandler(shutdownLatch));
 
+            // 快照
             txnLog = new FileTxnSnapLog(new File(config.dataLogDir), new File(
                     config.dataDir));
             txnLog.setServerStats(zkServer.serverStats());
@@ -116,9 +128,15 @@ public class ZooKeeperServerMain {
             zkServer.setTickTime(config.tickTime);
             zkServer.setMinSessionTimeout(config.minSessionTimeout);
             zkServer.setMaxSessionTimeout(config.maxSessionTimeout);
+
+            /**
+             * TODO MA socket 工厂，管理来自客户端的连接，负责处理网络请求，zk里有 netty ANIO两种实理
+             *      通过反射创建工厂对象
+             */
             cnxnFactory = ServerCnxnFactory.createFactory();
             cnxnFactory.configure(config.getClientPortAddress(),
                     config.getMaxClientCnxns());
+            // cnxnFactory 启动zk服务器
             cnxnFactory.startup(zkServer);
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
