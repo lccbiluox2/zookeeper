@@ -47,6 +47,7 @@ public class SaslServerPrincipal {
      * @return the name of the principal.
      */
     static String getServerPrincipal(WrapperInetSocketAddress addr) {
+        // 默认值 zookeeper
         String principalUserName = System.getProperty(ZK_SASL_CLIENT_USERNAME, "zookeeper");
         String hostName = addr.getHostName();
 

@@ -98,6 +98,8 @@ public class ZooKeeperSaslClient {
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
          * Default to "Client".
+         *
+         * ZOOKEEPER-1373: 允许系统属性指定zookeeper客户端应该使用的JAAS配置section。默认为“客户”。
          */
         String clientSection = System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
         // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.

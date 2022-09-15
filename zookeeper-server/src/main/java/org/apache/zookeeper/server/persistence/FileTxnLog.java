@@ -100,9 +100,18 @@ public class FileTxnLog implements TxnLog {
     public static final String LOG_FILE_PREFIX = "log";
 
     static final String FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "fsync.warningthresholdms";
+    /**
+     *todo: 9/15/22 1:29 PM 九师兄
+     * zookeeper.fsync.warningthresholdms
+     * 用于配置ZooKeeper进行事务日志（WAL）fsync操作消耗时间的报警阈值，一旦超过这个阈值
+     * 将会打印输出报警日志。该参数的默认值是1000，以毫秒为单位。参数值只能作为系统属性来设置。
+     *
+     **/
     static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper." + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
 
-    /** Maximum time we allow for elapsed fsync before WARNing */
+    /** Maximum time we allow for elapsed fsync before WARNing
+     * todo: 在警告之前，我们允许fsync运行的最大时间
+     * */
     private final static long fsyncWarningThresholdMS;
 
     static {
@@ -320,6 +329,8 @@ public class FileTxnLog implements TxnLog {
     /**
      * commit the logs. make sure that evertyhing hits the
      * disk
+     *
+     * 提交日志。确保所有内容都在磁盘上
      */
     public synchronized void commit() throws IOException {
         if (logStream != null) {
@@ -338,6 +349,11 @@ public class FileTxnLog implements TxnLog {
                     if(serverStats != null) {
                         serverStats.incrementFsyncThresholdExceedCount();
                     }
+                    /**
+                     *todo: 9/15/22 1:25 PM 九师兄
+                     * 在XXX中进行预写日志的fsync占用了XXMS，这将对操作延迟产生不利影响。
+                     * 请参见ZooKeeper故障处理指南
+                     **/
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS
