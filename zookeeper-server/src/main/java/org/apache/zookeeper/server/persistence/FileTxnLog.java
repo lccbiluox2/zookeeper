@@ -341,10 +341,14 @@ public class FileTxnLog implements TxnLog {
             if (forceSync) {
                 long startSyncNS = System.nanoTime();
 
+                //  todo: 2022/9/15 下午10:34 九师兄 强制写入数据
                 log.getChannel().force(false);
 
                 long syncElapsedMS =
                     TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+
+                //  todo: 2022/9/15 下午10:34 九师兄 如果强制写入数据的时间
+                //  大于设置的阈值，那么就会打印告警信息
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     if(serverStats != null) {
                         serverStats.incrementFsyncThresholdExceedCount();
@@ -353,6 +357,7 @@ public class FileTxnLog implements TxnLog {
                      *todo: 9/15/22 1:25 PM 九师兄
                      * 在XXX中进行预写日志的fsync占用了XXMS，这将对操作延迟产生不利影响。
                      * 请参见ZooKeeper故障处理指南
+                     *  https://blog.csdn.net/qq_21383435/article/details/126881069
                      **/
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
