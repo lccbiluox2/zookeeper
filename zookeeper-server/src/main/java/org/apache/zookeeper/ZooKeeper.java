@@ -471,6 +471,12 @@ public class ZooKeeper {
                 connectString);
         HostProvider hostProvider = new StaticHostProvider(
                 connectStringParser.getServerAddresses());
+        /** 创建连接管理器
+         * 首先当我们建立一个 Zookeeper 客户端时需要创建一个 Zookeeper 对象，且在这个
+         * Zookeeper 对象创建的过程中会创建一个客户端连接管理器（ClientCnxn），接着在创建
+         * ClientCnxn 的过程中又需要创建一个 ClientCnxnSocket 用于实现客户端间的通信，
+         * 所以我们跟进这个 getClientCnxnSocket 方法。
+         */
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), canBeReadOnly);
@@ -1861,15 +1867,29 @@ public class ZooKeeper {
         return cnxn.sendThread.getClientCnxnSocket().getLocalSocketAddress();
     }
 
+    /**
+     *todo: 10/9/22 6:43 PM 九师兄
+     *
+     *   在这个 getClientCnxnSocket 方法中会选择 ClientCnxnSocket 的实现版本，
+     * 目前的 Zookeeper 中存在两个实现版本，一个是使用 Java JDK 中的 NIO 实现的
+     * ClientCnxnSocketNIO ，另一个是使用 Netty 实现的 ClientCnxnSocketNetty ，
+     * 而选择的方式优先根据配置文件中的配置进行选择，如果没有进行配置则默认选择
+     * ClientCnxnSocketNIO 实现版本，之后再通过 反射 的方式创建其实例对象。
+     *
+     **/
     private static ClientCnxnSocket getClientCnxnSocket() throws IOException {
+        // 从配置文件中获取 ClientCnxnSocket 配置信息
         String clientCnxnSocketName = System
                 .getProperty(ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        // 如果配置文件中没有提供 ClientCnxnSocket 配置信息则默认使用 NIO
         if (clientCnxnSocketName == null) {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {
+            // 通过反射获取 ClientCnxnSocket 的构造方法
             return (ClientCnxnSocket) Class.forName(clientCnxnSocketName).getDeclaredConstructor()
                     .newInstance();
+            // 将创建完成的 ClientCnxnSocket 实例返回
         } catch (Exception e) {
             IOException ioe = new IOException("Couldn't instantiate "
                     + clientCnxnSocketName);

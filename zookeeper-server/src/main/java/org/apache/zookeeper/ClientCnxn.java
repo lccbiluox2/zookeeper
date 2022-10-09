@@ -248,26 +248,26 @@ public class ClientCnxn {
      * This class allows us to pass the headers and the relevant records around.
      */
     static class Packet {
-        RequestHeader requestHeader;
+        RequestHeader requestHeader;// 请求头信息
 
-        ReplyHeader replyHeader;
+        ReplyHeader replyHeader;// 响应头信息
 
-        Record request;
+        Record request;// 请求数据
 
-        Record response;
+        Record response;// 响应数据
 
         ByteBuffer bb;
 
         /** Client's view of the path (may differ due to chroot) **/
-        String clientPath;
+        String clientPath;	// 客户端路径视图
         /** Servers's view of the path (may differ due to chroot) **/
-        String serverPath;
+        String serverPath;// 服务器的路径视图
 
-        boolean finished;
+        boolean finished;// 是否已经处理完成
 
         AsyncCallback cb;
 
-        Object ctx;
+        Object ctx;// 异步回调所需使用的 context
 
         WatchRegistration watchRegistration;
 
