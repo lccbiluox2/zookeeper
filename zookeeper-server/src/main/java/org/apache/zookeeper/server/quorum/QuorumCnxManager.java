@@ -68,7 +68,13 @@ import org.slf4j.LoggerFactory;
  * message to the tail of the queue, thus changing the order of messages.
  * Although this is not a problem for the leader election, it could be a problem
  * when consolidating peer communication. This is to be verified, though.
- * 
+ *
+ * https://yangfan.blog.csdn.net/article/details/102947039
+ *
+ *   首先QuorumCnxManager是针对使用TCP进行领导者选举而实现的一款 连接管理器
+ * （connection manager） ，它能够为集群中的每对节点之间维护一条连接，同时可以
+ * 确保每对运行正常且可以通过网络进行通信的服务器之间都 只有一条 连接。
+ *
  */
 
 public class QuorumCnxManager {

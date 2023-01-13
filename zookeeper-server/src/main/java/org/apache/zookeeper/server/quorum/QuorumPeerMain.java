@@ -75,6 +75,7 @@ public class QuorumPeerMain {
      * To start the replicated server specify the configuration file name on
      * the command line.
      * @param args path to the configfile
+     *             这里 Main 方法的入参 args 其实就是我们自己配置并传入的 zoo.cfg 文件。
      */
     public static void main(String[] args) {
         QuorumPeerMain main = new QuorumPeerMain();
