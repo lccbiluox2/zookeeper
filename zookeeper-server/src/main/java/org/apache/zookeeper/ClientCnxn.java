@@ -997,6 +997,11 @@ public class ClientCnxn {
 
             setName(getName().replaceAll("\\(.*\\)",
                     "(" + addr.getHostName() + ":" + addr.getPort() + ")"));
+            /***
+             * todo: 1001_5Lmd5biI5YWE5ZSv5LiA5Y6f5Yib5paH56ug77yM56aB5q2i6L2s6L29_1001  2023/1/13 下午5:13 1001 九师兄
+             *       【zookeeper】zookeeper 如何 关闭 kerberos认证 Exception while determining if ZooKeeper is secure
+             *       https://blog.csdn.net/qq_21383435/article/details/125104332
+             */
             if (ZooKeeperSaslClient.isEnabled()) {
                 try {
                     zooKeeperSaslClient = new ZooKeeperSaslClient(SaslServerPrincipal.getServerPrincipal(addr));

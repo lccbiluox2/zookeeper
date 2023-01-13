@@ -48,6 +48,11 @@ import org.slf4j.LoggerFactory;
  * allows ClientCnxn to authenticate using SASL with a Zookeeper server.
  */
 public class ZooKeeperSaslClient {
+    /***
+     * todo: 1001_5Lmd5biI5YWE5ZSv5LiA5Y6f5Yib5paH56ug77yM56aB5q2i6L2s6L29_1001  2023/1/13 下午5:13 1001 九师兄
+     *       【zookeeper】zookeeper 如何 关闭 kerberos认证 Exception while determining if ZooKeeper is secure
+     *       https://blog.csdn.net/qq_21383435/article/details/125104332
+     */
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
     public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
@@ -60,6 +65,10 @@ public class ZooKeeperSaslClient {
      * ZOOKEEPER-1657 for more information.
      *
      * @return If the SASL client is enabled.
+     *
+     * todo: 1001_5Lmd5biI5YWE5ZSv5LiA5Y6f5Yib5paH56ug77yM56aB5q2i6L2s6L29_1001  2023/1/13 下午5:13 1001 九师兄
+     *       【zookeeper】zookeeper 如何 关闭 kerberos认证 Exception while determining if ZooKeeper is secure
+     *       https://blog.csdn.net/qq_21383435/article/details/125104332
      */
     public static boolean isEnabled() {
         return Boolean.valueOf(System.getProperty(ENABLE_CLIENT_SASL_KEY, ENABLE_CLIENT_SASL_DEFAULT));
